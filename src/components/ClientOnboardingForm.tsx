@@ -1,6 +1,6 @@
 import { OnboardingFormData, onboardingSchema } from "@/lib/onboarding.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import TextField from "./TextField";
 import CheckboxGroup from "./CheckboxGroup";
@@ -10,10 +10,15 @@ import { getTodayFormatted } from "@/utils/date.util";
 import Button, { ButtonType, ButtonVariant } from "./Button";
 import { clentServices } from "@/constants/client-services.constant";
 import { useRouter, useSearchParams } from "next/navigation";
+import { submitClientOnboarding } from "@/services/client-onboarding.service";
+import { ClientOnboardingFormData } from "@/types/client-onboarding.type";
 
 function ClientOnboardingForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const {
     register,
@@ -63,10 +68,34 @@ function ClientOnboardingForm() {
 
   const selectedServices = watch("servicesInterestedIn") || [];
 
-  const submitForm = (data: OnboardingFormData) => {
+  const submitForm = async (data: OnboardingFormData) => {
     setUrlQueryParams(data);
+    setIsLoading(true);
+    setSuccessMessage(null);
+    setErrorMessage(null);
 
-    console.debug(data);
+    const dataToSubmit: ClientOnboardingFormData = {
+      fullName: data.fullName,
+      email: data.email,
+      companyName: data.companyName,
+      services: data.servicesInterestedIn,
+      budgetUsd: data.budget ? +data?.budget : undefined,
+      projectStartDate: data.projectStartDate,
+      acceptTerms: data.acceptTerms,
+    };
+
+    const response = await submitClientOnboarding(dataToSubmit);
+
+    if (response.success) {
+      setSuccessMessage("Form submitted successfully!");
+      onClickReset();
+    } else {
+      setErrorMessage(
+        response.error?.message ||
+          "An error occurred while submitting the form."
+      );
+      setIsLoading(false);
+    }
   };
 
   const onClickReset = () => {
@@ -74,6 +103,9 @@ function ClientOnboardingForm() {
 
     // Clear query params
     router.replace(window.location.pathname, { scroll: false });
+
+    setSuccessMessage(null);
+    setErrorMessage(null);
   };
 
   const setUrlQueryParams = (data: OnboardingFormData) => {
@@ -163,18 +195,29 @@ function ClientOnboardingForm() {
       <div className="flex flex-row gap-5">
         {/* Submit button */}
         <div className="w-40">
-          <Button variant={ButtonVariant.OUTLINED} onClick={onClickReset}>
+          <Button
+            variant={ButtonVariant.OUTLINED}
+            onClick={onClickReset}
+            disabled={isLoading}
+          >
             Reset
           </Button>
         </div>
 
         {/* Reset button */}
         <div className="w-40">
-          <Button variant={ButtonVariant.PRIMARY} type={ButtonType.SUBMIT}>
+          <Button
+            variant={ButtonVariant.PRIMARY}
+            type={ButtonType.SUBMIT}
+            isLoading={isLoading}
+          >
             Submit
           </Button>
         </div>
       </div>
+
+      {successMessage && <div style={{ color: "green" }}>{successMessage}</div>}
+      {errorMessage && <div style={{ color: "red" }}>{errorMessage}</div>}
     </form>
   );
 }
