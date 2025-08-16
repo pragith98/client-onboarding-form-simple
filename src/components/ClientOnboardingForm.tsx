@@ -12,6 +12,7 @@ import { clentServices } from "@/constants/client-services.constant";
 import { useRouter, useSearchParams } from "next/navigation";
 import { submitClientOnboarding } from "@/services/client-onboarding.service";
 import { ClientOnboardingFormData } from "@/types/client-onboarding.type";
+import Alert from "./Alert";
 
 function ClientOnboardingForm() {
   const router = useRouter();
@@ -130,6 +131,10 @@ function ClientOnboardingForm() {
     <form onSubmit={handleSubmit(submitForm)} noValidate className={formStyles}>
       <h1 className="text-3xl font-bold">Client Onboarding Form</h1>
 
+      {/* Notification */}
+      {successMessage && <Alert variant='SUCCESS' title="Success" >{successMessage}</Alert>}
+      {errorMessage && <Alert variant='ERROR' title="Error" >{errorMessage}</Alert>}
+
       {/* Full name form field */}
       <TextField
         label="Full Name"
@@ -215,9 +220,6 @@ function ClientOnboardingForm() {
           </Button>
         </div>
       </div>
-
-      {successMessage && <div style={{ color: "green" }}>{successMessage}</div>}
-      {errorMessage && <div style={{ color: "red" }}>{errorMessage}</div>}
     </form>
   );
 }
