@@ -1,8 +1,7 @@
+"use client";
+
+import ClientOnboardingForm from "@/components/ClientOnboardingForm";
 
 export default function Home() {
-  return (
-    <>
-      <h1>hello</h1>
-    </>
-  );
+  return <ClientOnboardingForm />;
 }
